@@ -1,0 +1,41 @@
+{
+  "name": "@eliza/plugin-proofgate",
+  "version": "0.1.0",
+  "description": "ProofGate blockchain validation plugin for Eliza AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "eliza",
+    "ai-agent",
+    "blockchain",
+    "validation",
+    "security",
+    "proofgate",
+    "defi"
+  ],
+  "author": "0xCR6 <cristian@proofgate.xyz>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bytes0xcr6/eliza-plugin-proofgate.git"
+  },
+  "peerDependencies": {
+    "@ai16z/eliza": "^0.1.0"
+  },
+  "dependencies": {
+    "viem": "^2.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
