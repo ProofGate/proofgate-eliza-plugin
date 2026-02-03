@@ -38,8 +38,7 @@
     "@ai16z/eliza": "^0.1.0"
   },
   "dependencies": {
-    "viem": "^2.0.0",
-    "axios": "^1.6.0"
+    "viem": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

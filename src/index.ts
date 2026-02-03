@@ -144,8 +144,8 @@ export class ProofGatePlugin implements Plugin {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(error.error || error.message || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as { error?: string; message?: string };
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
       }
 
       const result = await response.json() as ValidationResult;
@@ -188,7 +188,13 @@ export class ProofGatePlugin implements Plugin {
     const response = await fetch(
       `${this.config.apiUrl}/agents/check?wallet=${wallet}`
     );
-    return response.json();
+    const data = await response.json();
+    return data as {
+      isRegistered: boolean;
+      verificationStatus: string;
+      trustScore: number;
+      tier: string;
+    };
   }
 
   /**
@@ -208,6 +214,7 @@ export class ProofGatePlugin implements Plugin {
     return [
       {
         name: 'PROOFGATE_VALIDATE',
+        similes: ['VALIDATE_TRANSACTION', 'CHECK_TRANSACTION', 'PROOFGATE_CHECK'],
         description: 'Validate a blockchain transaction before execution using ProofGate guardrails',
         validate: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
           const text = message.content.text.toLowerCase();
