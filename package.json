@@ -1,7 +1,7 @@
 {
-  "name": "@eliza/plugin-proofgate",
+  "name": "proofgate-eliza-plugin",
   "version": "0.1.0",
-  "description": "ProofGate blockchain validation plugin for Eliza AI agents",
+  "description": "ProofGate plugin for ai16z Eliza framework — validate AI agent transactions against security guardrails before execution",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -14,18 +14,25 @@
   },
   "keywords": [
     "eliza",
+    "ai16z",
     "ai-agent",
     "blockchain",
     "validation",
     "security",
+    "guardrails",
     "proofgate",
-    "defi"
+    "defi",
+    "web3"
   ],
   "author": "0xCR6 <cristian@proofgate.xyz>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bytes0xcr6/eliza-plugin-proofgate.git"
+    "url": "https://github.com/ProofGate/proofgate-eliza-plugin.git"
+  },
+  "homepage": "https://www.proofgate.xyz",
+  "bugs": {
+    "url": "https://github.com/ProofGate/proofgate-eliza-plugin/issues"
   },
   "peerDependencies": {
     "@ai16z/eliza": "^0.1.0"

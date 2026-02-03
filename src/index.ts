@@ -1,140 +1,272 @@
 import { Plugin, IAgentRuntime, Action, Memory, State, HandlerCallback } from '@ai16z/eliza';
-import { parseUnits, encodeFunctionData, type Address } from 'viem';
-import axios from 'axios';
+import { type Address } from 'viem';
 
 export interface ProofGateConfig {
+  /** API key from ProofGate dashboard (starts with pg_) */
   apiKey: string;
+  /** API URL (default: https://www.proofgate.xyz/api) */
   apiUrl?: string;
-  policyId?: string;
-  autoBlock?: boolean; // If true, blocks transactions that fail validation
+  /** Guardrail ID to validate against */
+  guardrailId?: string;
+  /** Chain ID (default: 56 for BSC, 97 for testnet) */
+  chainId?: number;
+  /** If true, throws error on failed validation (default: true) */
+  autoBlock?: boolean;
+  /** Log validation results (default: false) */
+  debug?: boolean;
+}
+
+export interface ValidationRequest {
+  from: Address;
+  to: Address;
+  data: `0x${string}`;
+  value?: string;
+  guardrailId?: string;
+  chainId?: number;
 }
 
 export interface ValidationResult {
-  result: 'PASS' | 'FAIL';
+  validationId: string;
+  result: 'PASS' | 'FAIL' | 'PENDING';
   reason: string;
-  evidenceURI: string;
+  evidenceUri: string;
   safe: boolean;
+  checks?: ValidationCheck[];
+  authenticated: boolean;
+  tier: string;
+}
+
+export interface ValidationCheck {
+  name: string;
+  passed: boolean;
+  details: string;
+  severity: 'info' | 'warning' | 'critical';
 }
 
 /**
- * ProofGate Plugin for Eliza
- * Validates blockchain transactions before execution
+ * ProofGate Plugin for Eliza AI Agents
+ * 
+ * Validates blockchain transactions before execution to prevent:
+ * - Wallet drains from prompt injection
+ * - Infinite approvals to malicious contracts
+ * - Transactions exceeding daily limits
+ * - High slippage swaps
+ * 
+ * @example
+ * ```typescript
+ * import { createProofGatePlugin } from '@eliza/plugin-proofgate';
+ * 
+ * const agent = new Agent({
+ *   plugins: [
+ *     createProofGatePlugin({
+ *       apiKey: 'pg_your_api_key',
+ *       guardrailId: 'your-guardrail-id',
+ *     })
+ *   ]
+ * });
+ * ```
  */
 export class ProofGatePlugin implements Plugin {
   name = 'proofgate';
   description = 'Validates blockchain transactions for safety before execution';
-  private config: ProofGateConfig;
+  
+  private config: Required<ProofGateConfig>;
   private runtime?: IAgentRuntime;
 
   constructor(config: ProofGateConfig) {
+    if (!config.apiKey) {
+      throw new Error('[ProofGate] API key is required. Get one at https://www.proofgate.xyz/dashboard');
+    }
+    if (!config.apiKey.startsWith('pg_')) {
+      throw new Error('[ProofGate] Invalid API key format. Keys start with "pg_"');
+    }
+
     this.config = {
-      apiUrl: 'https://api.proofgate.xyz/api',
+      apiUrl: 'https://www.proofgate.xyz/api',
+      guardrailId: '',
+      chainId: 56, // BSC Mainnet
       autoBlock: true,
+      debug: false,
       ...config,
     };
   }
 
   async init(runtime: IAgentRuntime): Promise<void> {
     this.runtime = runtime;
-    console.log('[ProofGate] Plugin initialized');
+    if (this.config.debug) {
+      console.log('[ProofGate] Plugin initialized', {
+        apiUrl: this.config.apiUrl,
+        chainId: this.config.chainId,
+        guardrailId: this.config.guardrailId || 'default',
+      });
+    }
   }
 
   /**
    * Validate a blockchain transaction before sending
+   * 
+   * @param request - Transaction details to validate
+   * @returns Validation result with pass/fail and evidence
+   * @throws Error if validation fails and autoBlock is true
+   * 
+   * @example
+   * ```typescript
+   * const result = await plugin.validateTransaction({
+   *   from: '0xYourAgent...',
+   *   to: '0xContract...',
+   *   data: '0xa9059cbb...', // ERC20 transfer calldata
+   *   value: '0',
+   * });
+   * 
+   * if (result.safe) {
+   *   // Execute transaction
+   * }
+   * ```
    */
-  async validateTransaction(
-    from: Address,
-    to: Address,
-    data: `0x${string}`,
-    value: string = '0'
-  ): Promise<ValidationResult> {
+  async validateTransaction(request: ValidationRequest): Promise<ValidationResult> {
+    const { from, to, data, value = '0' } = request;
+
     try {
-      const response = await axios.post(
-        `${this.config.apiUrl}/validate`,
-        {
+      const response = await fetch(`${this.config.apiUrl}/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey,
+        },
+        body: JSON.stringify({
           from,
           to,
           data,
           value,
-          policyId: this.config.policyId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+          guardrailId: request.guardrailId || this.config.guardrailId || undefined,
+          chainId: request.chainId || this.config.chainId,
+        }),
+      });
 
-      const result: ValidationResult = {
-        result: response.data.result,
-        reason: response.data.reason,
-        evidenceURI: response.data.evidenceURI,
-        safe: response.data.result === 'PASS',
-      };
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(error.error || error.message || `HTTP ${response.status}`);
+      }
 
+      const result = await response.json() as ValidationResult;
+
+      if (this.config.debug) {
+        console.log('[ProofGate] Validation result:', {
+          id: result.validationId,
+          result: result.result,
+          reason: result.reason,
+          safe: result.safe,
+        });
+      }
+
+      // Auto-block unsafe transactions
       if (this.config.autoBlock && !result.safe) {
-        throw new Error(`[ProofGate] Transaction blocked: ${result.reason}`);
+        const error = new Error(`[ProofGate] Transaction blocked: ${result.reason}`);
+        (error as any).validationResult = result;
+        throw error;
       }
 
       return result;
+
     } catch (error: any) {
-      console.error('[ProofGate] Validation error:', error.message);
+      if (this.config.debug) {
+        console.error('[ProofGate] Validation error:', error.message);
+      }
       throw error;
     }
   }
 
   /**
-   * Action: Validate Before Send
-   * Intercepts blockchain transactions and validates them
+   * Check if a wallet is a verified ProofGate agent
+   */
+  async checkAgent(wallet: Address): Promise<{
+    isRegistered: boolean;
+    verificationStatus: string;
+    trustScore: number;
+    tier: string;
+  }> {
+    const response = await fetch(
+      `${this.config.apiUrl}/agents/check?wallet=${wallet}`
+    );
+    return response.json();
+  }
+
+  /**
+   * Get evidence for a past validation
+   */
+  async getEvidence(validationId: string): Promise<any> {
+    const response = await fetch(
+      `${this.config.apiUrl}/evidence/${validationId}`
+    );
+    return response.json();
+  }
+
+  /**
+   * Eliza actions for transaction validation
    */
   get actions(): Action[] {
     return [
       {
-        name: 'VALIDATE_TRANSACTION',
-        description: 'Validate a blockchain transaction before execution',
+        name: 'PROOFGATE_VALIDATE',
+        description: 'Validate a blockchain transaction before execution using ProofGate guardrails',
         validate: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-          // Check if message contains transaction intent
           const text = message.content.text.toLowerCase();
           return (
             text.includes('send') ||
             text.includes('transfer') ||
             text.includes('swap') ||
-            text.includes('approve')
+            text.includes('approve') ||
+            text.includes('validate')
           );
         },
         handler: async (
           runtime: IAgentRuntime,
           message: Memory,
           state?: State,
-          options?: any,
+          options?: { from?: Address; to?: Address; data?: `0x${string}`; value?: string },
           callback?: HandlerCallback
         ): Promise<boolean> => {
           try {
-            // Extract transaction details from message
-            // This is a simplified example - real implementation would parse tx details
-            const { from, to, data, value } = this.extractTransactionDetails(message);
+            if (!options?.from || !options?.to || !options?.data) {
+              if (callback) {
+                callback({
+                  text: '⚠️ Transaction details required (from, to, data) for ProofGate validation.',
+                });
+              }
+              return false;
+            }
 
-            // Validate with ProofGate
-            const result = await this.validateTransaction(from, to, data, value);
+            const result = await this.validateTransaction({
+              from: options.from,
+              to: options.to,
+              data: options.data,
+              value: options.value || '0',
+            });
 
             if (callback) {
               if (result.safe) {
                 callback({
-                  text: `✅ Transaction validated and safe to execute.\nReason: ${result.reason}\nProof: ${result.evidenceURI}`,
+                  text: `✅ **Transaction Approved**\n\n` +
+                    `**Reason:** ${result.reason}\n` +
+                    `**Validation ID:** \`${result.validationId}\`\n` +
+                    `**Evidence:** [View](https://www.proofgate.xyz/evidence/${result.validationId})`,
                 });
               } else {
                 callback({
-                  text: `🚨 Transaction blocked by ProofGate.\nReason: ${result.reason}\nProof: ${result.evidenceURI}`,
+                  text: `🚨 **Transaction Blocked**\n\n` +
+                    `**Reason:** ${result.reason}\n` +
+                    `**Validation ID:** \`${result.validationId}\`\n` +
+                    `**Evidence:** [View](https://www.proofgate.xyz/evidence/${result.validationId})`,
                 });
               }
             }
 
             return result.safe;
+
           } catch (error: any) {
             if (callback) {
               callback({
-                text: `❌ ProofGate validation error: ${error.message}`,
+                text: `❌ **ProofGate Error:** ${error.message}`,
               });
             }
             return false;
@@ -144,15 +276,26 @@ export class ProofGatePlugin implements Plugin {
           [
             {
               user: '{{user1}}',
-              content: {
-                text: 'Send 100 USDC to 0x1234567890abcdef1234567890abcdef12345678',
-              },
+              content: { text: 'Send 100 USDC to 0x1234...' },
             },
             {
               user: '{{agent}}',
               content: {
-                text: '✅ Transaction validated and safe to execute.\nReason: Balance sufficient, contract whitelisted.\nProof: ipfs://Qm...',
-                action: 'VALIDATE_TRANSACTION',
+                text: '✅ **Transaction Approved**\n\nReason: Amount within daily limit\nValidation ID: `val_abc123`',
+                action: 'PROOFGATE_VALIDATE',
+              },
+            },
+          ],
+          [
+            {
+              user: '{{user1}}',
+              content: { text: 'Approve unlimited USDC to 0xSuspicious...' },
+            },
+            {
+              user: '{{agent}}',
+              content: {
+                text: '🚨 **Transaction Blocked**\n\nReason: Infinite approval detected - dangerous!\nValidation ID: `val_def456`',
+                action: 'PROOFGATE_VALIDATE',
               },
             },
           ],
@@ -160,29 +303,24 @@ export class ProofGatePlugin implements Plugin {
       },
     ];
   }
-
-  /**
-   * Extract transaction details from Eliza message
-   * TODO: Implement proper NLP parsing
-   */
-  private extractTransactionDetails(message: Memory): {
-    from: Address;
-    to: Address;
-    data: `0x${string}`;
-    value: string;
-  } {
-    // Placeholder - real implementation would parse natural language
-    return {
-      from: '0x0000000000000000000000000000000000000000' as Address,
-      to: '0x0000000000000000000000000000000000000000' as Address,
-      data: '0x' as `0x${string}`,
-      value: '0',
-    };
-  }
 }
 
 /**
- * Factory function to create ProofGate plugin
+ * Create a ProofGate plugin instance
+ * 
+ * @param config - Plugin configuration
+ * @returns ProofGatePlugin instance
+ * 
+ * @example
+ * ```typescript
+ * import { createProofGatePlugin } from '@eliza/plugin-proofgate';
+ * 
+ * const proofgate = createProofGatePlugin({
+ *   apiKey: process.env.PROOFGATE_API_KEY!,
+ *   guardrailId: 'your-guardrail-id',
+ *   chainId: 56, // BSC Mainnet
+ * });
+ * ```
  */
 export function createProofGatePlugin(config: ProofGateConfig): ProofGatePlugin {
   return new ProofGatePlugin(config);
