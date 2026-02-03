@@ -153,7 +153,7 @@ This is an open-source plugin. PRs welcome!
 
 1. Fork the repo
 2. Create a feature branch
-3. Submit a PR to [bytes0xcr6/eliza-plugin-proofgate](https://github.com/bytes0xcr6/eliza-plugin-proofgate)
+3. Submit a PR to [ProofGate/proofgate-eliza-plugin](https://github.com/ProofGate/proofgate-eliza-plugin)
 
 ## 📄 License
 
@@ -162,15 +162,15 @@ MIT
 ## 🔗 Links
 
 - **ProofGate:** [proofgate.xyz](https://www.proofgate.xyz)
-- **Docs:** [docs.proofgate.xyz](https://docs.proofgate.xyz)
-- **GitHub:** [github.com/bytes0xcr6/ProofGate-FE](https://github.com/bytes0xcr6/ProofGate-FE)
+- **Documentation:** [proofgate.xyz/docs](https://www.proofgate.xyz/docs)
+- **SDK (npm):** [@proofgate/sdk](https://www.npmjs.com/package/@proofgate/sdk)
+- **GitHub:** [github.com/ProofGate](https://github.com/ProofGate)
 - **Eliza:** [github.com/ai16z/eliza](https://github.com/ai16z/eliza)
 
 ## 💬 Support
 
-- **Discord:** [discord.gg/proofgate](https://discord.gg/proofgate)
 - **Email:** cristian@proofgate.xyz
-- **Twitter:** [@proofgate](https://twitter.com/proofgate)
+- **Twitter:** [@ProofGate](https://twitter.com/ProofGate)
 
 ---
 
