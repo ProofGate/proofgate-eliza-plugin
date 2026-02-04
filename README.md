@@ -149,6 +149,11 @@ Every validation is recorded on Base mainnet:
 - Cryptographic evidence
 - Query anytime via `getEvidence(validationId)`
 
+## 🔌 Related Plugins
+
+- **[@proofgate/goat-plugin](https://www.npmjs.com/package/@proofgate/goat-plugin)** - Transaction guardrails for GOAT SDK (50+ DeFi plugins)
+- **[@proofgate/sdk](https://www.npmjs.com/package/@proofgate/sdk)** - Core TypeScript SDK for custom integrations
+
 ## 🔗 Links
 
 - **ProofGate:** [proofgate.xyz](https://www.proofgate.xyz)
