@@ -17,7 +17,7 @@ export const proofGateEnvSchema = z.object({
     .string()
     .url()
     .optional()
-    .default('https://proofgate.xyz/api'),
+    .default('https://www.proofgate.xyz/api'),
   PROOFGATE_GUARDRAIL_ID: z.string().optional(),
   PROOFGATE_CHAIN_ID: z.coerce.number().int().positive().optional().default(8453),
   PROOFGATE_AUTO_BLOCK: z

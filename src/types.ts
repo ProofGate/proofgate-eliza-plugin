@@ -3,7 +3,7 @@ import { type Address } from 'viem';
 export interface ProofGateConfig {
   /** API key from ProofGate dashboard (starts with pg_) */
   apiKey: string;
-  /** API URL (default: https://proofgate.xyz/api) */
+  /** API URL (default: https://www.proofgate.xyz/api) */
   apiUrl?: string;
   /** Guardrail ID to validate against */
   guardrailId?: string;

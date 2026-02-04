@@ -77,7 +77,7 @@ export async function validateTransaction(
     debug?: boolean;
   } = {}
 ): Promise<ValidationResult> {
-  const apiUrl = options.apiUrl || 'https://proofgate.xyz/api';
+  const apiUrl = options.apiUrl || 'https://www.proofgate.xyz/api';
 
   const response = await fetch(`${apiUrl}/validate`, {
     method: 'POST',
@@ -121,7 +121,7 @@ export async function checkAgent(
   wallet: Address,
   options: { apiUrl?: string } = {}
 ): Promise<AgentInfo> {
-  const apiUrl = options.apiUrl || 'https://proofgate.xyz/api';
+  const apiUrl = options.apiUrl || 'https://www.proofgate.xyz/api';
   
   const response = await fetch(`${apiUrl}/agents/${wallet}`);
   
@@ -139,7 +139,7 @@ export async function getEvidence(
   validationId: string,
   options: { apiUrl?: string } = {}
 ): Promise<any> {
-  const apiUrl = options.apiUrl || 'https://proofgate.xyz/api';
+  const apiUrl = options.apiUrl || 'https://www.proofgate.xyz/api';
   
   const response = await fetch(`${apiUrl}/evidence/${validationId}`);
   return response.json();
