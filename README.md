@@ -23,13 +23,13 @@ npm install @proofgate/eliza-plugin
 ## 🔧 Quick Start
 
 ```typescript
-import { createProofGatePlugin } from 'proofgate-eliza-plugin';
+import { createProofGatePlugin } from '@proofgate/eliza-plugin';
 
 // Create plugin instance
 const proofgatePlugin = createProofGatePlugin({
-  apiKey: 'pg_your_api_key_here', // Get from https://www.proofgate.xyz
+  apiKey: 'pg_live_xxx', // Get from www.proofgate.xyz/dashboard/keys
   guardrailId: 'your-guardrail-id', // Optional: specific guardrail
-  chainId: 8453, // Base mainnet (or 56 for BSC)
+  chainId: 8453, // Base mainnet (default)
   autoBlock: true, // Block unsafe transactions (default: true)
 });
 
@@ -53,23 +53,41 @@ const agent = new Agent({
 5. **Blocks unsafe transactions** (if autoBlock: true)
 6. **Records cryptographic proof** on-chain
 
+## 🌐 Supported Chains
+
+Validate transactions on **19 EVM chains**:
+
+| Layer 1 | Layer 2 | Testnets |
+|---------|---------|----------|
+| Ethereum (1) | Base (8453) | Base Sepolia (84532) |
+| BNB Chain (56) | Arbitrum (42161) | Sepolia (11155111) |
+| Avalanche (43114) | Optimism (10) | Polygon Amoy (80002) |
+| Fantom (250) | Polygon (137) | BSC Testnet (97) |
+| Celo (42220) | zkSync Era (324) | |
+| Gnosis (100) | Linea, Scroll, Mantle... | |
+
 ## 🔑 Get Your API Key
 
-1. Go to [proofgate.xyz](https://www.proofgate.xyz)
+1. Go to [www.proofgate.xyz](https://www.proofgate.xyz)
 2. Connect wallet
-3. Create a guardrail (e.g., "Max $500/transaction, only Uniswap")
-4. Copy your API key & guardrail ID
+3. Go to Dashboard → API Keys
+4. Create a new key (starts with `pg_live_`)
 
-**Free tier:** 100 validations/month, no credit card required.
+**Pricing:**
+| Tier | Credits/Month | Rate Limit | Price |
+|------|---------------|------------|-------|
+| Free | 100 | 10/min | $0 |
+| Pro | 10,000 | 60/min | $49/mo |
+| Enterprise | Unlimited | 600/min | Contact us |
 
 ## 📋 Configuration Options
 
 ```typescript
 interface ProofGateConfig {
-  apiKey: string;        // Required: Your ProofGate API key (starts with pg_)
+  apiKey: string;        // Required: Your API key (starts with pg_live_)
   apiUrl?: string;       // Optional: Custom API URL (default: https://www.proofgate.xyz/api)
   guardrailId?: string;  // Optional: Specific guardrail to validate against
-  chainId?: number;      // Optional: Chain ID (default: 56 for BSC)
+  chainId?: number;      // Optional: Chain ID (default: 8453 for Base)
   autoBlock?: boolean;   // Optional: Auto-block unsafe transactions (default: true)
   debug?: boolean;       // Optional: Enable debug logging (default: false)
 }
