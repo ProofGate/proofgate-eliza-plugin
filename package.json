@@ -1,7 +1,10 @@
 {
-  "name": "proofgate-eliza-plugin",
+  "name": "@proofgate/eliza-plugin",
   "version": "0.1.0",
   "description": "ProofGate plugin for ai16z Eliza framework — validate AI agent transactions against security guardrails before execution",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

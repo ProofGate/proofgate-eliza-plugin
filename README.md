@@ -1,6 +1,9 @@
-# proofgate-eliza-plugin
+# @proofgate/eliza-plugin
 
 > Blockchain transaction validation for Eliza AI agents via ProofGate
+
+[![npm version](https://badge.fury.io/js/@proofgate%2Feliza-plugin.svg)](https://www.npmjs.com/package/@proofgate/eliza-plugin)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🚀 What is this?
 
@@ -14,7 +17,7 @@ This plugin adds **automatic transaction validation** to your Eliza AI agents be
 ## 📦 Installation
 
 ```bash
-npm install proofgate-eliza-plugin
+npm install @proofgate/eliza-plugin
 ```
 
 ## 🔧 Quick Start
