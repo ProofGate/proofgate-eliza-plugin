@@ -1,0 +1,1 @@
+export { validateTransactionAction } from './validate';
