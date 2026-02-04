@@ -8,7 +8,7 @@ export interface ProofGateConfig {
   apiUrl?: string;
   /** Guardrail ID to validate against */
   guardrailId?: string;
-  /** Chain ID (default: 56 for BSC, 97 for testnet) */
+  /** Chain ID (default: 8453 for Base Mainnet) */
   chainId?: number;
   /** If true, throws error on failed validation (default: true) */
   autoBlock?: boolean;
@@ -84,7 +84,7 @@ export class ProofGatePlugin implements Plugin {
     this.config = {
       apiUrl: 'https://www.proofgate.xyz/api',
       guardrailId: '',
-      chainId: 56, // BSC Mainnet
+      chainId: 8453, // Base Mainnet
       autoBlock: true,
       debug: false,
       ...config,
