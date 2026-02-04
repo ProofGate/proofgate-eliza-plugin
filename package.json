@@ -1,6 +1,6 @@
 {
   "name": "@proofgate/eliza-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "ProofGate plugin for elizaOS — validate AI agent transactions against security guardrails before execution",
   "publishConfig": {
     "access": "public"
